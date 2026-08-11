@@ -4,18 +4,17 @@ from dotenv import load_dotenv
 from sqlalchemy import create_engine
 from sqlalchemy.orm import declarative_base, sessionmaker
 
+from app.config import settings
+
 load_dotenv()
 
-DATABASE_URL = os.getenv("DATABASE_URL")
-SECRET_KEY = os.getenv("SECRET_KEY")
 
-if not DATABASE_URL:
+if not settings.DATABASE_URL:
     raise ValueError("DATABASE_URL is not configured")
 
 engine = create_engine(
-    DATABASE_URL,
+    settings.DATABASE_URL,
     pool_pre_ping=True,
-    connect_args={"sslmode": "require"},
 )
 
 SessionLocal = sessionmaker(
