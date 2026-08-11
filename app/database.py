@@ -7,6 +7,7 @@ from sqlalchemy.orm import declarative_base, sessionmaker
 load_dotenv()
 
 DATABASE_URL = os.getenv("DATABASE_URL")
+SECRET_KEY = os.getenv("SECRET_KEY")
 
 if not DATABASE_URL:
     raise ValueError("DATABASE_URL is not configured")
@@ -14,6 +15,7 @@ if not DATABASE_URL:
 engine = create_engine(
     DATABASE_URL,
     pool_pre_ping=True,
+    connect_args={"sslmode": "require"},
 )
 
 SessionLocal = sessionmaker(
