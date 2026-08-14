@@ -1,17 +1,18 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from .routers.auth import router as auth_router
+from app.database import Base, engine
+from app.routers import auth, products
+
+
+Base.metadata.create_all(bind=engine)
 
 
 app = FastAPI(
     title="VF Inventory CRM API",
-    version="1.0.0",
+    version="1.0.0"
 )
 
-@app.get("/health")
-def health():
-    return {"status": "ok"}
 
 app.add_middleware(
     CORSMiddleware,
@@ -22,7 +23,9 @@ app.add_middleware(
 )
 
 
-app.include_router(auth_router)
+app.include_router(auth.router)
+app.include_router(auth.router)
+app.include_router(products.router)
 
 
 @app.get("/")
@@ -35,5 +38,5 @@ def root():
 @app.get("/health")
 def health():
     return {
-        "status": "healthy"
+        "status": "ok"
     }

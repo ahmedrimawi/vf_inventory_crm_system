@@ -1,42 +1,34 @@
-from app.database import SessionLocal
-from app.models import User
-from app.security import hash_password
+from app.database import Base, SessionLocal, engine
+from app.models.user import User
+from app.services.auth_service import hash_password
 
+
+Base.metadata.create_all(bind=engine)
 
 db = SessionLocal()
 
 try:
 
-    username = "admin"
-    email = "admin@example.com"
-    password = "Admin123!"
-
-    existing_user = (
-        db.query(User)
-        .filter(User.username == username)
-        .first()
+    user = User(
+        username="admin",
+        email="admin@example.com",
+        full_name="System Administrator",
+        password=hash_password("Admin@123"),
+        role="admin",
+        is_active=True,
     )
 
-    if existing_user:
-        print("Admin user already exists")
+    db.add(user)
+    db.commit()
 
-    else:
+    print("Admin user created successfully.")
 
-        user = User(
-            username=username,
-            email=email,
-            password=hash_password(password),
-            full_name="System Administrator",
-            role="admin",
-            is_active=True,
-        )
+except Exception as e:
 
-        db.add(user)
-        db.commit()
+    db.rollback()
 
-        print("Admin user created successfully")
-        print("Username:", username)
-        print("Password:", password)
+    print("Error:", e)
 
 finally:
+
     db.close()

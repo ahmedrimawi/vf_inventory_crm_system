@@ -1,27 +1,25 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
-from ..database import get_db
-from ..models import User
-from ..schemas import LoginRequest, LoginResponse, UserResponse
-from ..security import (
+from app.database import get_db
+from app.models.user import User
+from app.schemas.user import LoginRequest, LoginResponse
+from app.services.auth_service import (
     create_access_token,
     verify_password,
 )
 
+
 router = APIRouter(
-    prefix="/auth",
-    tags=["Authentication"],
+    prefix="/api/auth",
+    tags=["Authentication"]
 )
 
 
-@router.post(
-    "/login",
-    response_model=LoginResponse,
-)
+@router.post("/login", response_model=LoginResponse)
 def login(
     request: LoginRequest,
-    db: Session = Depends(get_db),
+    db: Session = Depends(get_db)
 ):
 
     user = (
@@ -32,40 +30,34 @@ def login(
 
     if not user:
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid username or password",
+            status_code=401,
+            detail="Invalid username or password"
         )
 
     if not user.is_active:
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="User account is inactive",
+            status_code=403,
+            detail="User account is disabled"
         )
 
-    password_valid = verify_password(
+    if not verify_password(
         request.password,
-        user.password_hash,
+        user.password_hash
+    ):
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid username or password"
+        )
+
+    token = create_access_token(
+        str(user.id)
     )
 
-    if not password_valid:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid username or password",
-        )
-
-    token = create_access_token({
-        "sub": str(user.id),
-        "username": user.username,
-    })
-
-    return {
-        "access_token": token,
-        "token_type": "bearer",
-        "user": {
-            "id": user.id,
-            "username": user.username,
-            "email": user.email,
-            "full_name": user.full_name,
-            "is_active": user.is_active,
-        },
-    }
+    return LoginResponse(
+        access_token=token,
+        token_type="bearer",
+        user_id=str(user.id),
+        username=user.username,
+        full_name=user.full_name,
+        role=user.role,
+    )
