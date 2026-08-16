@@ -1,35 +1,94 @@
-# Environment variables
-.env
-.env.*
-!.env.example
-
-# Python
-__pycache__/
-*.py[cod]
-*.pyo
-*.pyd
+# =========================
+# Python Backend
+# =========================
 
 # Virtual environment
 .venv/
 venv/
 env/
 
-# IDE
-.vscode/
-.idea/
+# Python cache
+__pycache__/
+*.py[cod]
+*.pyo
 
-# macOS
-.DS_Store
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Python tooling
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
 
 # Logs
 *.log
 
-# Testing
-.pytest_cache/
-.coverage
-htmlcov/
 
-# Build
+# =========================
+# Flutter Frontend
+# =========================
+
+# Flutter/Dart generated files
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub-cache/
+.pub/
+
+# Flutter build output
 build/
-dist/
-*.egg-info/
+
+# Android
+**/android/.gradle/
+**/android/local.properties
+**/android/app/debug/
+**/android/app/profile/
+**/android/app/release/
+
+# iOS
+**/ios/Pods/
+**/ios/.symlinks/
+**/ios/Flutter/ephemeral/
+**/ios/Flutter/.last_build_id/
+
+# macOS
+**/macos/Pods/
+**/macos/Flutter/ephemeral/
+**/macos/Flutter/GeneratedPluginRegistrant.swift
+
+# Xcode
+*.xcuserstate
+**/xcuserdata/
+
+
+# =========================
+# IDE / OS
+# =========================
+
+# macOS
+.DS_Store
+
+# VS Code
+.vscode/
+
+# IntelliJ / Android Studio
+.idea/
+*.iml
+
+
+# =========================
+# Secrets
+# =========================
+
+*.pem
+*.key
+*.crt
+
+# Local configuration
+.env
+.env.local
+.env.development
+.env.production
