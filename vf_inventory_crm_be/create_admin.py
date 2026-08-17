@@ -13,7 +13,7 @@ try:
         username="admin",
         email="admin@example.com",
         full_name="System Administrator",
-        password=hash_password("Admin@123"),
+        password_hash=hash_password("Admin@123"),
         role="admin",
         is_active=True,
     )

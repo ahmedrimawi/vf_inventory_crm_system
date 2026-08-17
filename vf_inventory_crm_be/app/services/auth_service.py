@@ -6,18 +6,18 @@ from pwdlib import PasswordHash
 from app.config import settings
 
 
-password = PasswordHash.recommended()
+password_hash = PasswordHash.recommended()
 
 
 def hash_password(password: str) -> str:
-    return password.hash(password)
+    return password_hash.hash(password)
 
 
 def verify_password(
     password: str,
     hashed_password: str
 ) -> bool:
-    return password.verify(
+    return password_hash.verify(
         password,
         hashed_password
     )
