@@ -1,0 +1,20 @@
+# macOS
+.DS_Store
+
+# Flutter generated files
+**/macos/Flutter/GeneratedPluginRegistrant.swift
+
+# Python
+**/__pycache__/
+*.pyc
+**/.venv/
+
+# Environment
+.env
+**/.env
+
+# Flutter
+**/.dart_tool/
+**/build/
+**/.flutter-plugins
+**/.flutter-plugins-dependencies
