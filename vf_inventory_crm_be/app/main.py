@@ -5,18 +5,24 @@ from app.database import Base, engine
 from app.routers import auth
 
 
-Base.metadata.create_all(bind=engine)
-
-
 app = FastAPI(
     title="VF Inventory CRM API",
     version="1.0.0"
 )
 
+origins = [
+    "http://localhost:56943",
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "http://localhost:8000",
+    "http://127.0.0.1:8000",
+]
 
+
+# CORS - temporary development configuration
 # app.add_middleware(
 #     CORSMiddleware,
-#     allow_origins=["*"],
+#     allow_origins=origins,
 #     allow_credentials=True,
 #     allow_methods=["*"],
 #     allow_headers=["*"],
@@ -24,15 +30,7 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000",
-        "http://localhost:5000",
-        "http://localhost:8000",
-        "http://localhost:xxxx",
-        "http://localhost:63611",
-        "http://localhost:56506",
-        "https://vf-inventory-crm-frontend.onrender.com",
-    ],
+    allow_origin_regex=r"https?://(localhost|127\.0\.0\.1)(:\d+)?",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -54,3 +52,6 @@ def health():
     return {
         "status": "ok"
     }
+
+
+Base.metadata.create_all(bind=engine)

@@ -21,6 +21,8 @@ def login(
     request: LoginRequest,
     db: Session = Depends(get_db)
 ):
+    print("LOGIN USERNAME:", repr(request.username))
+    print("LOGIN PASSWORD RECEIVED:", bool(request.password))
 
     user = (
         db.query(User)
@@ -28,11 +30,17 @@ def login(
         .first()
     )
 
+    print("USER FOUND:", user is not None)
+
     if not user:
         raise HTTPException(
             status_code=401,
             detail="Invalid username or password"
         )
+
+    print("USER ID:", user.id)
+    print("USER ACTIVE:", user.is_active)
+    print("PASSWORD HASH EXISTS:", bool(user.password_hash))
 
     if not user.is_active:
         raise HTTPException(
@@ -40,18 +48,20 @@ def login(
             detail="User account is disabled"
         )
 
-    if not verify_password(
+    password_valid = verify_password(
         request.password,
         user.password_hash
-    ):
+    )
+
+    print("PASSWORD VALID:", password_valid)
+
+    if not password_valid:
         raise HTTPException(
             status_code=401,
             detail="Invalid username or password"
         )
 
-    token = create_access_token(
-        str(user.id)
-    )
+    token = create_access_token(str(user.id))
 
     return LoginResponse(
         access_token=token,
@@ -60,4 +70,5 @@ def login(
         username=user.username,
         full_name=user.full_name,
         role=user.role,
+        is_active=user.is_active,
     )
