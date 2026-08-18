@@ -116,7 +116,7 @@ def get_dashboard_summary(db):
 
     low_stock = [
         {
-            "id": str(product.id),
+            "id": product.id,
             "name": product.name,
             "stock_quantity": float(
                 product.stock_quantity or 0
