@@ -15,11 +15,11 @@ class LowStockProduct {
 
   factory LowStockProduct.fromJson(Map<String, dynamic> json) {
     return LowStockProduct(
-      id: json['id'],
-      name: json['name'],
-      stockQuantity: (json['stock_quantity'] as num).toDouble(),
-      unit: json['unit'],
-      minimumStockLevel: (json['minimum_stock_level'] as num).toDouble(),
+      id: json['id']?.toString() ?? '',
+      name: json['name']?.toString() ?? '',
+      stockQuantity: parseDouble(json['stock_quantity']),
+      unit: json['unit']?.toString() ?? 'kg',
+      minimumStockLevel: parseDouble(json['minimum_stock_level']),
     );
   }
 }
@@ -40,14 +40,71 @@ class DashboardSummary {
   });
 
   factory DashboardSummary.fromJson(Map<String, dynamic> json) {
+    final lowStockJson = json['low_stock'];
+
     return DashboardSummary(
-      totalProducts: json['total_products'],
-      totalStock: (json['total_stock'] as num).toDouble(),
-      totalCustomers: json['total_customers'],
-      totalSuppliers: json['total_suppliers'],
-      lowStock: (json['low_stock'] as List)
-          .map((item) => LowStockProduct.fromJson(item))
-          .toList(),
+      totalProducts: parseInt(json['total_products']),
+
+      totalStock: parseDouble(json['total_stock']),
+
+      totalCustomers: parseInt(json['total_customers']),
+
+      totalSuppliers: parseInt(json['total_suppliers']),
+
+      lowStock: lowStockJson is List
+          ? lowStockJson
+                .map(
+                  (item) =>
+                      LowStockProduct.fromJson(Map<String, dynamic>.from(item)),
+                )
+                .toList()
+          : [],
     );
   }
+}
+
+double parseDouble(dynamic value) {
+  if (value == null) {
+    return 0.0;
+  }
+
+  if (value is double) {
+    return value;
+  }
+
+  if (value is int) {
+    return value.toDouble();
+  }
+
+  if (value is num) {
+    return value.toDouble();
+  }
+
+  if (value is String) {
+    return double.tryParse(value.trim()) ?? 0.0;
+  }
+
+  return 0.0;
+}
+
+int parseInt(dynamic value) {
+  if (value == null) {
+    return 0;
+  }
+
+  if (value is int) {
+    return value;
+  }
+
+  if (value is num) {
+    return value.toInt();
+  }
+
+  if (value is String) {
+    return int.tryParse(value.trim()) ??
+        double.tryParse(value.trim())?.toInt() ??
+        0;
+  }
+
+  return 0;
 }
