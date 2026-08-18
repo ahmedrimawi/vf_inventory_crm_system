@@ -16,7 +16,15 @@ class AuthService {
       data: {'username': username, 'password': password},
     );
 
-    final data = response.data;
+    print('LOGIN STATUS: ${response.statusCode}');
+    print('LOGIN RESPONSE: ${response.data}');
+
+    final data = response.data as Map<String, dynamic>;
+
+    print('ACCESS TOKEN EXISTS: ${data['access_token'] != null}');
+    print('USER ID: ${data['user_id']}');
+    print('USERNAME: ${data['username']}');
+    print('IS ACTIVE: ${data['is_active']}');
 
     await storage.write(key: 'access_token', value: data['access_token']);
 
