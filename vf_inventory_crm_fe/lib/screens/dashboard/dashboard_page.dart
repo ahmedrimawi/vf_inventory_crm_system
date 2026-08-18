@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../models/dashboard_summary.dart';
+import '../../services/dashboard_service.dart';
 import '../../widgets/sidebar.dart';
 import '../../widgets/dashboard_card.dart';
 import '../../widgets/responsive_layout.dart';
@@ -13,6 +15,48 @@ class DashboardPage extends StatefulWidget {
 
 class _DashboardPageState extends State<DashboardPage> {
   int selectedIndex = 0;
+
+  final DashboardService _dashboardService = DashboardService();
+
+  DashboardSummary? _dashboardData;
+
+  bool _isLoading = true;
+
+  String? _errorMessage;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _loadDashboard();
+  }
+
+  Future<void> _loadDashboard() async {
+    try {
+      setState(() {
+        _isLoading = true;
+        _errorMessage = null;
+      });
+
+      final data = await _dashboardService.getDashboardSummary();
+
+      if (!mounted) return;
+
+      setState(() {
+        _dashboardData = data;
+        _isLoading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+
+      setState(() {
+        _isLoading = false;
+        _errorMessage = e.toString();
+      });
+
+      debugPrint('Dashboard API Error: $e');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -38,7 +82,6 @@ class _DashboardPageState extends State<DashboardPage> {
           : Drawer(
               child: Sidebar(
                 selectedIndex: selectedIndex,
-
                 onSelected: (index) {
                   setState(() {
                     selectedIndex = index;
@@ -54,7 +97,6 @@ class _DashboardPageState extends State<DashboardPage> {
           if (isDesktop)
             Sidebar(
               selectedIndex: selectedIndex,
-
               onSelected: (index) {
                 setState(() {
                   selectedIndex = index;
@@ -94,6 +136,44 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   Widget _dashboard() {
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (_errorMessage != null) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.error_outline, size: 50, color: Colors.red),
+
+              const SizedBox(height: 16),
+
+              const Text(
+                'Failed to load dashboard',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              ),
+
+              const SizedBox(height: 8),
+
+              Text(_errorMessage!, textAlign: TextAlign.center),
+
+              const SizedBox(height: 20),
+
+              ElevatedButton(
+                onPressed: _loadDashboard,
+                child: const Text('Retry'),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    final data = _dashboardData!;
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24),
 
@@ -108,58 +188,7 @@ class _DashboardPageState extends State<DashboardPage> {
 
           const SizedBox(height: 24),
 
-          LayoutBuilder(
-            builder: (context, constraints) {
-              final width = constraints.maxWidth;
-
-              int columns = 1;
-
-              if (width > 1300) {
-                columns = 4;
-              } else if (width > 800) {
-                columns = 2;
-              }
-
-              return GridView.count(
-                crossAxisCount: columns,
-
-                crossAxisSpacing: 20,
-                mainAxisSpacing: 20,
-
-                childAspectRatio: 2.4,
-
-                shrinkWrap: true,
-
-                physics: const NeverScrollableScrollPhysics(),
-
-                children: const [
-                  DashboardCard(
-                    title: 'Total Products',
-                    value: '245',
-                    icon: Icons.inventory_2,
-                  ),
-
-                  DashboardCard(
-                    title: 'Total Stock',
-                    value: '1,250',
-                    icon: Icons.warehouse,
-                  ),
-
-                  DashboardCard(
-                    title: 'Customers',
-                    value: '85',
-                    icon: Icons.people,
-                  ),
-
-                  DashboardCard(
-                    title: 'Suppliers',
-                    value: '24',
-                    icon: Icons.local_shipping,
-                  ),
-                ],
-              );
-            },
-          ),
+          _buildSummaryCards(data),
 
           const SizedBox(height: 30),
 
@@ -169,8 +198,10 @@ class _DashboardPageState extends State<DashboardPage> {
                 return Column(
                   children: [
                     _salesChart(),
+
                     const SizedBox(height: 20),
-                    _lowStock(),
+
+                    _lowStock(data.lowStock),
                   ],
                 );
               }
@@ -183,7 +214,7 @@ class _DashboardPageState extends State<DashboardPage> {
 
                   const SizedBox(width: 20),
 
-                  Expanded(child: _lowStock()),
+                  Expanded(child: _lowStock(data.lowStock)),
                 ],
               );
             },
@@ -191,6 +222,78 @@ class _DashboardPageState extends State<DashboardPage> {
         ],
       ),
     );
+  }
+
+  Widget _buildSummaryCards(DashboardSummary data) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final width = constraints.maxWidth;
+
+        int columns = 1;
+
+        if (width > 1300) {
+          columns = 4;
+        } else if (width > 800) {
+          columns = 2;
+        }
+
+        return GridView.count(
+          crossAxisCount: columns,
+
+          crossAxisSpacing: 20,
+
+          mainAxisSpacing: 20,
+
+          childAspectRatio: 2.4,
+
+          shrinkWrap: true,
+
+          physics: const NeverScrollableScrollPhysics(),
+
+          children: [
+            DashboardCard(
+              title: 'Total Products',
+
+              value: data.totalProducts.toString(),
+
+              icon: Icons.inventory_2,
+            ),
+
+            DashboardCard(
+              title: 'Total Stock',
+
+              value: '${_formatNumber(data.totalStock)} kg',
+
+              icon: Icons.warehouse,
+            ),
+
+            DashboardCard(
+              title: 'Customers',
+
+              value: data.totalCustomers.toString(),
+
+              icon: Icons.people,
+            ),
+
+            DashboardCard(
+              title: 'Suppliers',
+
+              value: data.totalSuppliers.toString(),
+
+              icon: Icons.local_shipping,
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  String _formatNumber(double value) {
+    if (value == value.roundToDouble()) {
+      return value.toInt().toString();
+    }
+
+    return value.toStringAsFixed(2);
   }
 
   Widget _salesChart() {
@@ -207,12 +310,13 @@ class _DashboardPageState extends State<DashboardPage> {
             children: [
               const Text(
                 'Sales Overview',
+
                 style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               ),
 
               const SizedBox(height: 30),
 
-              Expanded(
+              const Expanded(
                 child: Center(
                   child: Text(
                     'Sales Chart',
@@ -227,7 +331,7 @@ class _DashboardPageState extends State<DashboardPage> {
     );
   }
 
-  Widget _lowStock() {
+  Widget _lowStock(List<LowStockProduct> products) {
     return Card(
       child: SizedBox(
         height: 350,
@@ -239,20 +343,36 @@ class _DashboardPageState extends State<DashboardPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
 
             children: [
-              const Text(
-                'Low Stock',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+
+                children: [
+                  const Text(
+                    'Low Stock',
+
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                  ),
+
+                  Text(
+                    '${products.length} items',
+                    style: TextStyle(color: Colors.grey.shade600),
+                  ),
+                ],
               ),
 
               const SizedBox(height: 20),
 
-              _stockItem('Tomatoes', '15 kg'),
+              Expanded(
+                child: products.isEmpty
+                    ? const Center(child: Text('No low-stock products'))
+                    : ListView.builder(
+                        itemCount: products.length,
 
-              _stockItem('Potatoes', '20 kg'),
-
-              _stockItem('Apples', '8 kg'),
-
-              _stockItem('Cucumbers', '12 kg'),
+                        itemBuilder: (context, index) {
+                          return _stockItem(products[index]);
+                        },
+                      ),
+              ),
             ],
           ),
         ),
@@ -260,15 +380,26 @@ class _DashboardPageState extends State<DashboardPage> {
     );
   }
 
-  Widget _stockItem(String name, String quantity) {
+  Widget _stockItem(LowStockProduct product) {
     return ListTile(
       contentPadding: EdgeInsets.zero,
 
-      leading: const Icon(Icons.warning_amber),
+      leading: const Icon(Icons.warning_amber, color: Colors.orange),
 
-      title: Text(name),
+      title: Text(product.name),
 
-      trailing: Text(quantity),
+      subtitle: Text(
+        'Minimum: '
+        '${_formatNumber(product.minimumStockLevel)} '
+        '${product.unit}',
+      ),
+
+      trailing: Text(
+        '${_formatNumber(product.stockQuantity)} '
+        '${product.unit}',
+
+        style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.red),
+      ),
     );
   }
 }
