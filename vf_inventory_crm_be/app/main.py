@@ -30,6 +30,7 @@ app.add_middleware(
         "http://localhost:8000",
         "http://localhost:xxxx",
         "http://localhost:63611",
+        "http://localhost:56506",
         "https://vf-inventory-crm-frontend.onrender.com",
     ],
     allow_credentials=True,
