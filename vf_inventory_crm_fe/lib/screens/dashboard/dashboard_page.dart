@@ -1,10 +1,16 @@
 import 'package:flutter/material.dart';
 
+import '../../core/theme/app_colors.dart';
 import '../../models/dashboard_summary.dart';
 import '../../services/dashboard_service.dart';
 import '../../widgets/sidebar.dart';
 import '../../widgets/dashboard_card.dart';
 import '../../widgets/responsive_layout.dart';
+import '../../widgets/dashboard_header.dart';
+import '../customers/customers_page.dart';
+import '../inventory/inventory_page.dart';
+import '../sales/sales_page.dart';
+import '../suppliers/suppliers_page.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
@@ -27,7 +33,6 @@ class _DashboardPageState extends State<DashboardPage> {
   @override
   void initState() {
     super.initState();
-
     _loadDashboard();
   }
 
@@ -62,39 +67,12 @@ class _DashboardPageState extends State<DashboardPage> {
   Widget build(BuildContext context) {
     final isDesktop = ResponsiveHelper.isDesktop(context);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('VF Inventory CRM'),
-
-        actions: [
-          IconButton(icon: const Icon(Icons.notifications), onPressed: () {}),
-
-          const SizedBox(width: 10),
-
-          const CircleAvatar(child: Icon(Icons.person)),
-
-          const SizedBox(width: 20),
-        ],
-      ),
-
-      drawer: isDesktop
-          ? null
-          : Drawer(
-              child: Sidebar(
-                selectedIndex: selectedIndex,
-                onSelected: (index) {
-                  setState(() {
-                    selectedIndex = index;
-                  });
-
-                  Navigator.pop(context);
-                },
-              ),
-            ),
-
-      body: Row(
-        children: [
-          if (isDesktop)
+    if (isDesktop) {
+      return Scaffold(
+        body: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // SIDEBAR
             Sidebar(
               selectedIndex: selectedIndex,
               onSelected: (index) {
@@ -104,31 +82,128 @@ class _DashboardPageState extends State<DashboardPage> {
               },
             ),
 
+            // MAIN AREA
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // HEADER
+                  DashboardHeader(
+                    title: _getPageTitle(),
+                    subtitle: _getPageSubtitle(),
+                  ),
+
+                  // CONTENT
+                  Expanded(child: _buildContent()),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    // MOBILE / TABLET
+    return Scaffold(
+      drawer: Drawer(
+        child: Sidebar(
+          selectedIndex: selectedIndex,
+          onSelected: (index) {
+            setState(() {
+              selectedIndex = index;
+            });
+
+            Navigator.pop(context);
+          },
+        ),
+      ),
+      body: Column(
+        children: [
+          // MOBILE HEADER
+          DashboardHeader(title: _getPageTitle(), subtitle: _getPageSubtitle()),
+
+          // MOBILE CONTENT
           Expanded(child: _buildContent()),
         ],
       ),
     );
   }
 
+  String _getPageTitle() {
+    switch (selectedIndex) {
+      case 1:
+        return 'Inventory';
+
+      case 2:
+        return 'Customers';
+
+      case 3:
+        return 'Suppliers';
+
+      case 4:
+        return 'Sales';
+
+      case 5:
+        return 'Reports';
+
+      case 6:
+        return 'Settings';
+
+      default:
+        return 'Dashboard';
+    }
+  }
+
+  String _getPageSubtitle() {
+    switch (selectedIndex) {
+      case 1:
+        return 'Manage your products and stock';
+
+      case 2:
+        return 'Manage your customers';
+
+      case 3:
+        return 'Manage your suppliers';
+
+      case 4:
+        return 'Manage your sales';
+
+      case 5:
+        return 'View business reports';
+
+      case 6:
+        return 'Manage application settings';
+
+      default:
+        return 'Overview of your business';
+    }
+  }
+
   Widget _buildContent() {
     switch (selectedIndex) {
       case 1:
-        return const Center(child: Text('Inventory'));
+        return const InventoryPage();
 
       case 2:
-        return const Center(child: Text('Customers'));
+        return const CustomersPage();
 
       case 3:
-        return const Center(child: Text('Suppliers'));
+        return const SuppliersPage();
 
       case 4:
-        return const Center(child: Text('Sales'));
+        return const SalesPage();
 
       case 5:
-        return const Center(child: Text('Reports'));
+        return const _PlaceholderPage(
+          title: 'Reports',
+          icon: Icons.bar_chart_outlined,
+        );
 
       case 6:
-        return const Center(child: Text('Settings'));
+        return const _PlaceholderPage(
+          title: 'Settings',
+          icon: Icons.settings_outlined,
+        );
 
       default:
         return _dashboard();
@@ -174,52 +249,46 @@ class _DashboardPageState extends State<DashboardPage> {
 
     final data = _dashboardData!;
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(24),
+    return Container(
+      color: AppColors.background,
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildSummaryCards(data),
 
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+            const SizedBox(height: 30),
 
-        children: [
-          const Text(
-            'Dashboard',
-            style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
-          ),
+            LayoutBuilder(
+              builder: (context, constraints) {
+                if (constraints.maxWidth < 900) {
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      _salesChart(),
 
-          const SizedBox(height: 24),
+                      const SizedBox(height: 20),
 
-          _buildSummaryCards(data),
+                      _lowStock(data.lowStock),
+                    ],
+                  );
+                }
 
-          const SizedBox(height: 30),
-
-          LayoutBuilder(
-            builder: (context, constraints) {
-              if (constraints.maxWidth < 900) {
-                return Column(
+                return Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _salesChart(),
+                    Expanded(flex: 2, child: _salesChart()),
 
-                    const SizedBox(height: 20),
+                    const SizedBox(width: 20),
 
-                    _lowStock(data.lowStock),
+                    Expanded(child: _lowStock(data.lowStock)),
                   ],
                 );
-              }
-
-              return Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-
-                children: [
-                  Expanded(flex: 2, child: _salesChart()),
-
-                  const SizedBox(width: 20),
-
-                  Expanded(child: _lowStock(data.lowStock)),
-                ],
-              );
-            },
-          ),
-        ],
+              },
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -239,47 +308,33 @@ class _DashboardPageState extends State<DashboardPage> {
 
         return GridView.count(
           crossAxisCount: columns,
-
           crossAxisSpacing: 20,
-
           mainAxisSpacing: 20,
-
-          childAspectRatio: 2.4,
-
+          childAspectRatio: 2.8,
           shrinkWrap: true,
-
           physics: const NeverScrollableScrollPhysics(),
-
           children: [
             DashboardCard(
               title: 'Total Products',
-
               value: data.totalProducts.toString(),
-
               icon: Icons.inventory_2,
             ),
 
             DashboardCard(
               title: 'Total Stock',
-
               value: '${_formatNumber(data.totalStock)} kg',
-
               icon: Icons.warehouse,
             ),
 
             DashboardCard(
               title: 'Customers',
-
               value: data.totalCustomers.toString(),
-
               icon: Icons.people,
             ),
 
             DashboardCard(
               title: 'Suppliers',
-
               value: data.totalSuppliers.toString(),
-
               icon: Icons.local_shipping,
             ),
           ],
@@ -298,33 +353,40 @@ class _DashboardPageState extends State<DashboardPage> {
 
   Widget _salesChart() {
     return Card(
-      child: SizedBox(
-        height: 350,
+      color: AppColors.background,
+      elevation: 0,
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: AppColors.border, width: 1),
+        ),
+        child: SizedBox(
+          height: 350,
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Sales Overview',
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                ),
 
-        child: Padding(
-          padding: const EdgeInsets.all(24),
+                const SizedBox(height: 30),
 
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-
-            children: [
-              const Text(
-                'Sales Overview',
-
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-              ),
-
-              const SizedBox(height: 30),
-
-              const Expanded(
-                child: Center(
-                  child: Text(
-                    'Sales Chart',
-                    style: TextStyle(fontSize: 25, color: Colors.grey),
+                const Expanded(
+                  child: Center(
+                    child: Text(
+                      'Sales Chart',
+                      style: TextStyle(
+                        fontSize: 25,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -333,47 +395,52 @@ class _DashboardPageState extends State<DashboardPage> {
 
   Widget _lowStock(List<LowStockProduct> products) {
     return Card(
-      child: SizedBox(
-        height: 350,
-
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-
-                children: [
-                  const Text(
-                    'Low Stock',
-
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                  ),
-
-                  Text(
-                    '${products.length} items',
-                    style: TextStyle(color: Colors.grey.shade600),
-                  ),
-                ],
-              ),
-
-              const SizedBox(height: 20),
-
-              Expanded(
-                child: products.isEmpty
-                    ? const Center(child: Text('No low-stock products'))
-                    : ListView.builder(
-                        itemCount: products.length,
-
-                        itemBuilder: (context, index) {
-                          return _stockItem(products[index]);
-                        },
+      color: AppColors.background,
+      elevation: 0,
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: AppColors.border, width: 1),
+        ),
+        child: SizedBox(
+          height: 350,
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'Low Stock',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
                       ),
-              ),
-            ],
+                    ),
+
+                    Text(
+                      '${products.length} items',
+                      style: TextStyle(color: Colors.grey.shade600),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 20),
+
+                Expanded(
+                  child: products.isEmpty
+                      ? const Center(child: Text('No low-stock products'))
+                      : ListView.builder(
+                          itemCount: products.length,
+                          itemBuilder: (context, index) {
+                            return _stockItem(products[index]);
+                          },
+                        ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -397,8 +464,41 @@ class _DashboardPageState extends State<DashboardPage> {
       trailing: Text(
         '${_formatNumber(product.stockQuantity)} '
         '${product.unit}',
-
         style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.red),
+      ),
+    );
+  }
+}
+
+class _PlaceholderPage extends StatelessWidget {
+  final String title;
+  final IconData icon;
+
+  const _PlaceholderPage({required this.title, required this.icon});
+
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(icon, size: 28),
+
+              const SizedBox(width: 12),
+
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 28,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }

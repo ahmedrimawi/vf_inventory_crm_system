@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'core/theme/app_colors.dart';
 import 'screens/login/login_page.dart';
 
 void main() {
@@ -22,7 +23,7 @@ class InventoryApp extends StatelessWidget {
       theme: ThemeData(
         useMaterial3: true,
 
-        colorSchemeSeed: Colors.green,
+        colorSchemeSeed: AppColors.background,
 
         brightness: Brightness.light,
 
