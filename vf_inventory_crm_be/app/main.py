@@ -4,6 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.database import Base, engine
 from app.routers import auth, product, customer, supplier
 from app.routers import dashboard
+from app.routers import transaction
 
 
 app = FastAPI(
@@ -43,6 +44,7 @@ app.include_router(product.router)
 app.include_router(supplier.router)
 app.include_router(customer.router)
 app.include_router(dashboard.router)
+app.include_router(transaction.router)
 
 
 @app.get("/")

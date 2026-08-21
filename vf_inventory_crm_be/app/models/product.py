@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime
 from decimal import Decimal
-from typing import Optional
+from typing import TYPE_CHECKING, List, Optional
 
 from sqlalchemy import (
     Boolean,
@@ -16,6 +16,10 @@ from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base
+
+if TYPE_CHECKING:
+    from app.models.transaction_item import TransactionItem
+    from app.models.supplier import Supplier
 
 
 class Product(Base):
@@ -78,9 +82,7 @@ class Product(Base):
         nullable=False,
     )
 
-    supplier_id: Mapped[
-        Optional[uuid.UUID]
-    ] = mapped_column(
+    supplier_id: Mapped[Optional[uuid.UUID]] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey(
             "suppliers.id",
@@ -108,7 +110,14 @@ class Product(Base):
         nullable=False,
     )
 
-    supplier = relationship(
+    # Product -> TransactionItem
+    transaction_items: Mapped[List["TransactionItem"]] = relationship(
+        "TransactionItem",
+        back_populates="product",
+    )
+
+    # Product -> Supplier
+    supplier: Mapped[Optional["Supplier"]] = relationship(
         "Supplier",
         back_populates="products",
     )
