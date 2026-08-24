@@ -30,6 +30,20 @@ class TransactionCreate(BaseModel):
     items: list[TransactionItemCreate]
 
 
+class TransactionUpdate(BaseModel):
+    transaction_type: Optional[str] = None
+
+    customer_id: Optional[UUID] = None
+
+    supplier_id: Optional[UUID] = None
+
+    notes: Optional[str] = None
+
+    status: Optional[str] = None
+
+    items: Optional[list[TransactionItemCreate]] = None
+
+
 class TransactionItemResponse(BaseModel):
     id: UUID
     product_id: UUID
